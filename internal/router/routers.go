@@ -2,13 +2,23 @@ package router
 
 import (
 	"backend/internal/middlewares"
+	"backend/internal/router/websocket"
+	"backend/internal/middlewares/kafka"
 	"fmt"
 	"time"
+	"context"
 
 	"github.com/gin-gonic/gin"
 )
 
 var Router *gin.Engine
+
+var Hub *websocket.Hub
+var Consumer *kafka.Consumer
+var Producer *kafka.Producer
+var Ctx context.Context
+var Cancel context.CancelFunc
+
 
 func init() {
 	// 创建路由实例
@@ -32,6 +42,18 @@ func init() {
 			param.ErrorMessage,
 		)
 	}))
+
+	// 配置ws
+	Hub := websocket.NewHub()
+	go Hub.Run()
+
+	// 初始化 Kafka producer
+	Producer, _ := kafka.NewProducer("43.133.12.107:30092", "myTopic")
+
+	// 启动 Kafka consumer
+	Ctx, Cancel = context.WithCancel(context.Background())
+	Consumer, _ := kafka.NewConsumer("43.133.12.107:30092", "myGroup", "myTopic", Hub)
+	Consumer.Start(Ctx)
 
 	// 路由组配置
 	Router.POST("/signup", SignUpHandler)
@@ -86,6 +108,15 @@ func init() {
 		admin.PUT("/users/unban", UnbanUserHandler)
 		admin.PUT("/users/", UpdateUserHandler)
 	}
+
+	Router.GET("/ws", func(c *gin.Context) {
+        // Kafka 生产回调
+        kafkaProducerFunc := func(msg []byte) {
+            Producer.ProduceMessage(msg)
+        }
+        websocket.ServeWs(Hub, c.Writer, c.Request, kafkaProducerFunc)
+    })
+    
 
 	Router.NoRoute(func(c *gin.Context) {
 		c.JSON(404, gin.H{

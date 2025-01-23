@@ -2,8 +2,13 @@ package main
 
 import (
 	_ "backend/internal/db"
-	"backend/internal/utils/logger"
 	"backend/internal/router"
+	"backend/internal/utils/logger"
+	"fmt"
+
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
@@ -21,21 +26,10 @@ func main() {
 	if err != nil {
 		logger.Logger.Error("服务器启动失败", zap.Error(err))
 	}
+
+	quit := make(chan os.Signal, 1)
+    signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+    <-quit
+    fmt.Println("Shutting down...")
+	router.Cancel()
 }
-
-// func test(){
-// 	testUser := model.User{
-// 		Name:        "测试用户",
-// 		MailAddress: "test@example.com",
-// 		Password:    "password123",
-// 		Avatar:      "https://picx.zhimg.com/v2-4a3fd89b61cfeb8f2fe7bc85de5b5438_1440w.jpg?source=7e7ef6e2&needBackground=1",
-// 		UserClass:   "user",
-// 		Gender:      "男",
-// 		PhoneNumber: "12345678901",
-// 		Address:     "测试地址",
-// 	}
-
-// 	var userCRUD db.UsersCRUD
-
-// 	userCRUD.CreateByObject(testUser)
-// }
