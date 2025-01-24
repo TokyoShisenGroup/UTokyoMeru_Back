@@ -10,6 +10,7 @@ import (
 type Config struct {
 	DbConfig    DbConfig
 	RedisConfig RedisConfig
+	LogConfig   LogConfig
 }
 
 type DbConfig struct {
@@ -28,6 +29,24 @@ type RedisConfig struct {
 	Password  string `json:"password"`
 	Db        int    `json:"db"`
 	Pool_size int    `json:"pool_size"`
+}
+
+type LogConfig struct {
+	Backend struct {
+		Filename   string `json:"filename"`
+		MaxSize    int    `json:"maxsize"`
+		MaxBackups int    `json:"maxbackups"`
+		MaxAge     int    `json:"maxage"`
+		Compress   bool   `json:"compress"`
+	} `json:"backend"`
+	Access struct {
+		Filename   string `json:"filename"`
+		MaxSize    int    `json:"maxsize"`
+		MaxBackups int    `json:"maxbackups"`
+		MaxAge     int    `json:"maxage"`
+		Compress   bool   `json:"compress"`
+	} `json:"access"`
+	Level string `json:"level"`
 }
 
 var C Config

@@ -31,5 +31,6 @@ func main() {
     signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
     <-quit
     fmt.Println("Shutting down...")
+	defer router.Producer.Close()
 	router.Cancel()
 }

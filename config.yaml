@@ -15,4 +15,17 @@ redisConfig:
   pool_size: 100
 
 
-kafkaConfig:
+LogConfig:
+  backend:
+    filename: backend.log
+    maxsize: 100
+    maxbackups: 10
+    maxage: 30
+    compress: false
+  access:
+    filename: access.log
+    maxsize: 100
+    maxbackups: 10
+    maxage: 30
+    compress: true
+  level: info

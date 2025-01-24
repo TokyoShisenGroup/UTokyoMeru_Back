@@ -61,3 +61,16 @@ type Comment struct {
 	UserID      uint
 	GoodID      uint
 }
+
+type Message struct {
+	gorm.Model
+    From    uint      `gorm:"not null"`
+    To      uint      `gorm:"not null"`
+    Content   string    `gorm:"not null"`
+	ReplyTo   uint      `gorm:"default:null"`
+	Type      string    `gorm:"not null"`
+    IsRead    bool      `gorm:"not null;default:false"`
+	IsDeleted bool      `gorm:"not null;default:false"`
+	Sender    User      `gorm:"foreignKey:From"`
+	Receiver  User      `gorm:"foreignKey:To"`
+}

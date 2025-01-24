@@ -18,8 +18,10 @@ func (gt *GoodTransform) FindGoodsByIdDb2ResponseModel(dbModel model.Good, theUs
 		Views:       dbModel.Views,
 		Favorites:   uint(len(dbModel.FavoUsers)),
 		User: model.UserForGetGoodsResponse{
+			UserID: theUser.ID,
 			Name:   theUser.Name,
 			Avatar: theUser.Avatar,
+			Rating: theUser.Rating,
 		},
 	}
 }

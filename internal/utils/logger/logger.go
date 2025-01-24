@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"backend/config"
 	"io"
 	"os"
 	"path"
@@ -21,20 +22,20 @@ func init() {
 
 	// 业务日志配置
 	businessHook := &lumberjack.Logger{
-		Filename:   path.Join("logs", "backend.log"),
-		MaxSize:    100,
-		MaxBackups: 10,
-		MaxAge:     30,
-		Compress:   false,
+		Filename:   path.Join("logs", config.C.LogConfig.Backend.Filename),
+		MaxSize:    config.C.LogConfig.Backend.MaxSize,
+		MaxBackups: config.C.LogConfig.Backend.MaxBackups,
+		MaxAge:     config.C.LogConfig.Backend.MaxAge,
+		Compress:   config.C.LogConfig.Backend.Compress,
 	}
 
 	// Gin访问日志配置
 	accessHook := &lumberjack.Logger{
-		Filename:   path.Join("logs", "access.log"),
-		MaxSize:    100,
-		MaxBackups: 10,
-		MaxAge:     30,
-		Compress:   true,
+		Filename:   path.Join("logs", config.C.LogConfig.Access.Filename),
+		MaxSize:    config.C.LogConfig.Access.MaxSize,
+		MaxBackups: config.C.LogConfig.Access.MaxBackups,
+		MaxAge:     config.C.LogConfig.Access.MaxAge,
+		Compress:   config.C.LogConfig.Access.Compress,
 	}
 
 	// 编码器配置
@@ -55,7 +56,22 @@ func init() {
 
 	// 设置日志级别
 	atomicLevel := zap.NewAtomicLevel()
-	atomicLevel.SetLevel(zap.DebugLevel)
+	switch config.C.LogConfig.Level {
+	case "debug":
+		atomicLevel.SetLevel(zap.DebugLevel)
+	case "info":
+		atomicLevel.SetLevel(zap.InfoLevel)
+	case "warn":
+		atomicLevel.SetLevel(zap.WarnLevel)
+	case "error":
+		atomicLevel.SetLevel(zap.ErrorLevel)
+	case "panic":
+		atomicLevel.SetLevel(zap.PanicLevel)
+	case "fatal":
+		atomicLevel.SetLevel(zap.FatalLevel)
+	default:
+		atomicLevel.SetLevel(zap.InfoLevel)
+	}
 
 	// 创建业务日志核心
 	businessCore := zapcore.NewCore(

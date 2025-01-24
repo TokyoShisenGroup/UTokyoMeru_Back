@@ -2,7 +2,8 @@ package websocket
 
 import (
     "sync"
-    "fmt"
+    "backend/internal/utils/logger"
+	"go.uber.org/zap"
 )
 
 type Hub struct {
@@ -35,7 +36,7 @@ func (h *Hub) Run() {
             h.mu.Lock()
             h.clients[client] = true
             h.mu.Unlock()
-            fmt.Println("New client connected")
+            logger.Logger.Info("New client connected", zap.Any("client", client))
 
         case client := <-h.Unregister:
             h.mu.Lock()
@@ -44,7 +45,7 @@ func (h *Hub) Run() {
                 close(client.send)
             }
             h.mu.Unlock()
-
+            logger.Logger.Info("Client disconnected", zap.Any("client", client))
         case message := <-h.Broadcast:
             // 这里是简单的广播给所有客户端
             // 如果要按用户、房间号分发，需要加上用户ID/房间ID逻辑

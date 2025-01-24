@@ -12,8 +12,10 @@ type GetGoodsResponse struct {
 	User        UserForGetGoodsResponse `json:"user"`
 }
 type UserForGetGoodsResponse struct {
-	Name   string
-	Avatar string
+	UserID   uint    `json:"user_id"`
+	Name     string  `json:"name"`
+	Avatar   string  `json:"avatar"`
+	Rating   float32 `json:"rating"`
 }
 
 // receive this when frontend posts or updates goods

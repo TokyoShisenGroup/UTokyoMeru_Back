@@ -3,11 +3,12 @@ package kafka
 import (
 	"backend/internal/router/websocket"
 	"context"
-	"log"
 	"time"
 
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"backend/internal/utils/logger"
+	"go.uber.org/zap"
 )
 
 type Consumer struct {
@@ -38,7 +39,7 @@ func (cn *Consumer) Start(ctx context.Context) {
 	// 订阅Topic
 	err := cn.c.SubscribeTopics([]string{cn.topic}, nil)
 	if err != nil {
-		log.Println("SubscribeTopics error:", err)
+		logger.Logger.Error("SubscribeTopics error:", zap.Error(err))
 		return
 	}
 
@@ -47,7 +48,7 @@ func (cn *Consumer) Start(ctx context.Context) {
 		for {
 			select {
 			case <-ctx.Done():
-				log.Println("Consumer stopped")
+				logger.Logger.Info("Consumer stopped")
 				return
 			default:
 				// 拉取消息

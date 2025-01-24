@@ -2,8 +2,6 @@
 package kafka
 
 import (
-	"log"
-
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"backend/internal/utils/logger"
 	"go.uber.org/zap"
@@ -15,7 +13,7 @@ type Producer struct {
 }
 
 func NewProducer(broker, topic string) (*Producer, error) {
-	log.Printf("Attempting to connect to Kafka at: %s", broker)
+	logger.Logger.Info("Attempting to connect to Kafka at: %s", zap.String("broker", broker))
 	config := &kafka.ConfigMap{
 		"bootstrap.servers": broker,
 		"socket.keepalive.enable": true,
@@ -44,7 +42,7 @@ func (pr *Producer) ProduceMessage(msg []byte) {
 		Value: msg,
 	}, nil)
 	if err != nil {
-		log.Println("Produce error:", err)
+		logger.Logger.Error("Produce error:", zap.Error(err))
 	}
 }
 
