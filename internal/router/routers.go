@@ -4,11 +4,13 @@ import (
 	"backend/internal/middlewares"
 	"backend/internal/router/websocket"
 	"backend/internal/middlewares/kafka"
+	"backend/internal/utils/logger"
 	"fmt"
 	"time"
 	"context"
 
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 var Router *gin.Engine
@@ -50,9 +52,13 @@ func init() {
 	// 初始化 Kafka producer
 	Producer, _ := kafka.NewProducer("43.133.12.107:30092", "myTopic")
 
+
 	// 启动 Kafka consumer
 	Ctx, Cancel = context.WithCancel(context.Background())
-	Consumer, _ := kafka.NewConsumer("43.133.12.107:30092", "myGroup", "myTopic", Hub)
+	Consumer, err := kafka.NewConsumer("43.133.12.107:30092", "myGroup", "myTopic", Hub)
+	if err != nil {
+		logger.Logger.Error("Failed to create consumer", zap.Error(err))
+	}
 	Consumer.Start(Ctx)
 
 	// 路由组配置
@@ -114,7 +120,7 @@ func init() {
         kafkaProducerFunc := func(msg []byte) {
             Producer.ProduceMessage(msg)
         }
-        websocket.ServeWs(Hub, c.Writer, c.Request, kafkaProducerFunc)
+        websocket.ServeWs(Hub, c, kafkaProducerFunc)
     })
     
 

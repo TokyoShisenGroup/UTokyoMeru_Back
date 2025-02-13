@@ -46,7 +46,7 @@ type User struct {
 	MailCode    string    `gorm:"default:null"`
 	Address     string    `gorm:"default:null"`
 	Rating      float32   `gorm:"default:0"`
-	RatingCount uint   `gorm:"default:0"`
+	RatingCount uint      `gorm:"default:0"`
 	Bio         string    `gorm:"default:null"`
 	Token       string
 }
@@ -64,13 +64,19 @@ type Comment struct {
 
 type Message struct {
 	gorm.Model
-    From    uint      `gorm:"not null"`
-    To      uint      `gorm:"not null"`
-    Content   string    `gorm:"not null"`
-	ReplyTo   uint      `gorm:"default:null"`
-	Type      string    `gorm:"not null"`
-    IsRead    bool      `gorm:"not null;default:false"`
-	IsDeleted bool      `gorm:"not null;default:false"`
-	Sender    User      `gorm:"foreignKey:From"`
-	Receiver  User      `gorm:"foreignKey:To"`
+	From      uint   `gorm:"not null" json:"from"`
+	To        uint   `gorm:"not null" json:"to"`
+	Content   string `gorm:"not null" json:"content"`
+	ReplyTo   uint   `gorm:"default:null" json:"reply_to"`
+	Status    string `gorm:"not null;default:Received" json:"status"` //Sent:已发送 Received:已接收 Read:已读 Deleted:已删除
+	Sender    User   `gorm:"foreignKey:From" json:"sender"`
+	Receiver  User   `gorm:"foreignKey:To" json:"receiver"`
+}
+
+type MessageQueue struct {
+	gorm.Model
+	TargetUserID uint   `json:"user_id"`
+	MessageID    uint   `json:"message_id"`
+	Message      Message `gorm:"foreignKey:MessageID"`
+	Status       string `json:"status"` // Pending:待发送 Sent:已发送 Received:已接收 Read:已读 Deleted:已删除
 }

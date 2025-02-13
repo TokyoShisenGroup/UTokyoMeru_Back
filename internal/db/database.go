@@ -76,7 +76,7 @@ func init() {
 		fmt.Errorf("failed to connect database: %v", err)
 	}
 
-	err = db.AutoMigrate(&model.User{}, &model.Good{}, &model.Comment{})
+	err = db.AutoMigrate(&model.User{}, &model.Good{}, &model.Comment{}, &model.Message{}, &model.MessageQueue{})
 	if err != nil {
 		fmt.Errorf("failed to migrate database: %v", err)
 	}
@@ -100,5 +100,4 @@ func init() {
 	}
 
 	fmt.Println("Database initialized")
-	return
 }

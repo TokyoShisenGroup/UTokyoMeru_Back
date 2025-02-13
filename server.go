@@ -1,9 +1,10 @@
 package main
 
 import (
-	_ "backend/internal/db"
+	"backend/internal/db"
 	"backend/internal/router"
 	"backend/internal/utils/logger"
+	"backend/internal/service"
 	"fmt"
 
 	"os"
@@ -21,6 +22,14 @@ func main() {
 	// 设置 Gin 模式
 	gin.SetMode(gin.DebugMode)
 
+	messageService := service.NewMessageService(router.Producer, router.Consumer, router.Hub, logger.Logger)
+    syncService := service.NewSyncService(db.DB, router.Hub, logger.Logger)
+
+    // 启动消息处理服务
+    go messageService.ProcessSendQueue(router.Ctx)
+    go messageService.ProcessRetryQueue()
+	go syncService.SyncOfflineMessages(1)
+	
 	// 启动服务器
 	err := router.Router.Run(":8100")
 	if err != nil {

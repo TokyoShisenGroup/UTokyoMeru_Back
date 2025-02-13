@@ -5,9 +5,9 @@ import (
 	"context"
 	"time"
 
+	"backend/internal/utils/logger"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
-	"backend/internal/utils/logger"
 	"go.uber.org/zap"
 )
 
@@ -19,13 +19,13 @@ type Consumer struct {
 
 func NewConsumer(broker, group, topic string, hub *websocket.Hub) (*Consumer, error) {
 	config := &kafka.ConfigMap{
-		"bootstrap.servers": broker,
-		"group.id":          group,
+		"bootstrap.servers":       broker,
+		"group.id":                group,
 		"socket.keepalive.enable": true,
 		"request.timeout.ms":      30000,
 		"socket.timeout.ms":       30000,
-		"auto.offset.reset": "earliest",
-		"client.id":         "go-kafka-consumer", // 添加客户端ID便于调试
+		"auto.offset.reset":       "earliest",
+		"client.id":               "go-kafka-consumer", // 添加客户端ID便于调试
 	}
 
 	c, err := kafka.NewConsumer(config)
@@ -61,4 +61,54 @@ func (cn *Consumer) Start(ctx context.Context) {
 			}
 		}
 	}()
+}
+
+func (cn *Consumer) Consume(ctx context.Context) <-chan kafka.Message {
+	// 创建消息通道
+	messageChan := make(chan kafka.Message, 100) // 设置缓冲区大小为100
+
+	// 订阅Topic
+	err := cn.c.SubscribeTopics([]string{cn.topic}, nil)
+	if err != nil {
+		logger.Logger.Error("SubscribeTopics error:", zap.Error(err))
+		close(messageChan)
+		return messageChan
+	}
+
+	// 启动消费协程
+	go func() {
+		defer close(messageChan)
+		defer cn.c.Close()
+
+		for {
+			select {
+			case <-ctx.Done():
+				logger.Logger.Info("Consumer stopped by context")
+				return
+			default:
+				// 拉取消息，设置超时时间为500ms
+				msg, err := cn.c.ReadMessage(500 * time.Millisecond)
+				if err != nil {
+					if err.(kafka.Error).Code() != kafka.ErrTimedOut {
+						logger.Logger.Error("Failed to read message:", zap.Error(err))
+					}
+					continue
+				}
+
+				if msg == nil {
+					continue
+				}
+
+				// 发送消息到通道
+				select {
+				case messageChan <- *msg:
+					// 消息发送成功
+				case <-ctx.Done():
+					return
+				}
+			}
+		}
+	}()
+
+	return messageChan
 }

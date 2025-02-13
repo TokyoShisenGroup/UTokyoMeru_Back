@@ -5,11 +5,11 @@ type CRUD [T any] interface  {
 	FindAll() ([]T , error)
 	FindAllOrdered(fieldName string, order string) ([]T, error)
 	FindById(id uint) (*T, error)
+	FindAllByField(fieldName string, value interface{}, orderBy string, order string) ([]T, error)
+	FindOneByUniqueField(fieldName string, value interface{}) (*T, error)
 	UpdateByObject(T) error
 	UpdateByField(string, interface{}, T) error
 	DeleteById(id uint) error
-	FindAllByField(fieldName string, value interface{}, orderBy string, order string) ([]T, error)
-	FindOneByUniqueField(fieldName string, value interface{}) (*T, error)
 	Search(ops ...searchOption) ([]T, error)
 }
 
