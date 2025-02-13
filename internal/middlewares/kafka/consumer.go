@@ -3,6 +3,7 @@ package kafka
 import (
 	"backend/internal/router/websocket"
 	"context"
+	"fmt"
 	"time"
 
 	"backend/internal/utils/logger"
@@ -18,21 +19,64 @@ type Consumer struct {
 }
 
 func NewConsumer(broker, group, topic string, hub *websocket.Hub) (*Consumer, error) {
+	if broker == "" || group == "" || topic == "" {
+		return nil, fmt.Errorf("broker, group and topic cannot be empty")
+	}
+
 	config := &kafka.ConfigMap{
 		"bootstrap.servers":       broker,
 		"group.id":                group,
 		"socket.keepalive.enable": true,
-		"request.timeout.ms":      30000,
 		"socket.timeout.ms":       30000,
 		"auto.offset.reset":       "earliest",
-		"client.id":               "go-kafka-consumer", // 添加客户端ID便于调试
+		"client.id":               "go-kafka-consumer",
+		"enable.auto.commit":      true,
+		"auto.commit.interval.ms": 5000,
+		"session.timeout.ms":      10000,
+		"max.poll.interval.ms":    300000,
 	}
+
+	logger.Logger.Info("Creating new Kafka consumer",
+		zap.String("broker", broker),
+		zap.String("group", group),
+		zap.String("topic", topic))
 
 	c, err := kafka.NewConsumer(config)
 	if err != nil {
-		return nil, err
+		logger.Logger.Error("Failed to create consumer",
+			zap.Error(err),
+			zap.String("broker", broker))
+		return nil, fmt.Errorf("failed to create consumer: %w", err)
 	}
-	return &Consumer{c: c, hub: hub, topic: topic}, nil
+
+	// 验证连接
+	metadata, err := c.GetMetadata(&topic, false, 5000)
+	if err != nil {
+		logger.Logger.Error("Failed to get metadata",
+			zap.Error(err),
+			zap.String("topic", topic))
+		c.Close()
+		return nil, fmt.Errorf("failed to get metadata: %w", err)
+	}
+
+	// 检查 topic 是否存在
+	if _, exists := metadata.Topics[topic]; !exists {
+		logger.Logger.Error("Topic does not exist",
+			zap.String("topic", topic))
+		c.Close()
+		return nil, fmt.Errorf("topic %s does not exist", topic)
+	}
+
+	consumer := &Consumer{
+		c:     c,
+		hub:   hub,
+		topic: topic,
+	}
+
+	logger.Logger.Info("Successfully created Kafka consumer",
+		zap.String("topic", topic))
+
+	return consumer, nil
 }
 
 func (cn *Consumer) Start(ctx context.Context) {
@@ -66,7 +110,11 @@ func (cn *Consumer) Start(ctx context.Context) {
 func (cn *Consumer) Consume(ctx context.Context) <-chan kafka.Message {
 	// 创建消息通道
 	messageChan := make(chan kafka.Message, 100) // 设置缓冲区大小为100
-
+	if cn == nil {
+		fmt.Println("Consumer is nil")
+		close(messageChan)
+		return messageChan
+	}
 	// 订阅Topic
 	err := cn.c.SubscribeTopics([]string{cn.topic}, nil)
 	if err != nil {

@@ -36,7 +36,7 @@ func (s *SyncService) SyncOfflineMessages(userID uint) error {
 	}
 	// 获取所有未读的离线消息
 	if err := s.db.Joins("JOIN message_queues ON messages.id = message_queues.message_id").
-		Where("message_queues.user_id = ? AND message_queues.status = Received", userID).
+		Where("message_queues.user_id = ? AND message_queues.status = 'Received'", userID).
 		Find(&messages).Error; err != nil {
 		return err
 	}

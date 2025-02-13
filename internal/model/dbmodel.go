@@ -75,7 +75,7 @@ type Message struct {
 
 type MessageQueue struct {
 	gorm.Model
-	TargetUserID uint   `json:"user_id"`
+	UserID 		uint   `json:"user_id"`
 	MessageID    uint   `json:"message_id"`
 	Message      Message `gorm:"foreignKey:MessageID"`
 	Status       string `json:"status"` // Pending:待发送 Sent:已发送 Received:已接收 Read:已读 Deleted:已删除

@@ -43,7 +43,7 @@ func (s *MessageService) HandleIncomingMessage(msg *websocket.Message) error {
 	}
 	// 2. 创建消息队列记录
 	queueItem := &model.MessageQueue{
-		TargetUserID: msg.ToID,
+		UserID: msg.ToID,
 		MessageID:    message.ID,
 		Status:       "Received",
 	}
@@ -96,9 +96,9 @@ func (s *MessageService) ProcessRetryQueue() {
 		for _, item := range queueItems {
 			message := item.Message
 			
-			if s.hub.IsUserOnline(item.TargetUserID) {
+			if s.hub.IsUserOnline(item.UserID) {
 				messageBytes, _ := json.Marshal(message)
-				if err := s.hub.SendToUser(item.TargetUserID, messageBytes); err == nil {
+				if err := s.hub.SendToUser(item.UserID, messageBytes); err == nil {
 					s.markMessageAsSent(item.MessageID)
 				}
 			}

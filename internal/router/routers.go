@@ -49,13 +49,17 @@ func init() {
 	Hub := websocket.NewHub()
 	go Hub.Run()
 
+	var err error
 	// 初始化 Kafka producer
-	Producer, _ := kafka.NewProducer("43.133.12.107:30092", "myTopic")
+	Producer, err = kafka.NewProducer("43.133.12.107:30092", "myTopic")
+	if err != nil {
+		logger.Logger.Error("Failed to create producer", zap.Error(err))
+	}
 
 
 	// 启动 Kafka consumer
 	Ctx, Cancel = context.WithCancel(context.Background())
-	Consumer, err := kafka.NewConsumer("43.133.12.107:30092", "myGroup", "myTopic", Hub)
+	Consumer, err = kafka.NewConsumer("43.133.12.107:30092", "myGroup", "myTopic", Hub)
 	if err != nil {
 		logger.Logger.Error("Failed to create consumer", zap.Error(err))
 	}
